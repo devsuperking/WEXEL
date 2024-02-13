@@ -2,6 +2,7 @@ import './App.css'
 import { Button, Input, Tabs, TabList, Tab, Divider, Select } from "@chakra-ui/react"
 import logo from "./assets/wexel.png";
 import { useEffect, useState } from 'react';
+import { toast } from "react-toastify";
 
 function AlphabetTableHeaders() {
 	const letters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
@@ -20,7 +21,6 @@ function AlphabetTableHeaders() {
 	return allHeaders;
 }
 
-
 function App() {
 
 	const [selected, setSelected] = useState(null);
@@ -29,6 +29,14 @@ function App() {
 		console.log(document.getElementById("fontSelect")?.value)
 		document.getElementById("fontSelect").value = selected?.style.fontFamily.replaceAll('"', '');
 	}, [selected])
+
+	function tdKeyDown(e) {
+		console.log(e.key);
+		if (e.key == "Enter" && selected && selected.value.startsWith("[") && selected.value.endsWith("]")) {
+			selected.value = eval(selected.value.replace("[", '').replace("]", ''));
+			toast("Przeliczanie wyrażenia...")
+		}
+	}
 
 	return (
 		<>
@@ -147,10 +155,10 @@ function App() {
 							Array.from({ length: 20 }).map(a => (
 								<tr key={a}>
 									{Array.from({ length: AlphabetTableHeaders().length }).map(b => (
-										<td key={b} onClick={(e) => {
-											setSelected(e.target);
-										}}>
-											<input style={{ fontFamily: "Times New Poland" }} />
+										<td key={b}>
+											<input style={{ fontFamily: "Times New Roman" }} onClick={(e) => {
+												setSelected(e.target);
+											}} onKeyDown={(e) => tdKeyDown(e)} />
 										</td>
 									))}
 								</tr>
