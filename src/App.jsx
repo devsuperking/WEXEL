@@ -2,7 +2,7 @@ import './App.css'
 import { Button, Input, Tabs, TabList, Tab, Divider, Select } from "@chakra-ui/react"
 import logo from "./assets/wexel.png";
 import { useEffect, useRef, useState } from 'react';
-import { toast } from "react-toastify";
+import { toast, Slide } from "react-toastify";
 import rgbToHex from "./helpers/RgbToHex";
 import AlphabetHeaders from './helpers/TableHeaders';
 
@@ -20,9 +20,34 @@ function App() {
 	}, [selected])
 
 	function tdKeyDown(e) {
-		if (e.key == "Enter" && selected && selected.value.startsWith("[") && selected.value.endsWith("]")) {
-			selected.value = eval(selected.value.replace("[", '').replace("]", ''));
-			toast("Przeliczanie wyrażenia...")
+		if (e.key == "Enter" && selected && ((selected.value.startsWith("[") && selected.value.endsWith("]")) || (selected.value.startsWith("{") && selected.value.endsWith("}")))) {
+			let text = "";
+			for (let x in columnRefs.current) {
+				let copy = columnRefs.current[x];
+				delete copy[0]
+				for (const y in copy) {
+					text += `const ${AlphabetHeaders()[x] + y} = '${columnRefs.current[x][y].value}';`
+				}
+			}
+			toast.success("Przeliczanie wyrażenia...", { transition: Slide });
+
+			let expression;
+			if (selected.value.startsWith("[") && selected.value.endsWith("]")) expression = selected.value.replace("[", '').replace("]", '');
+			if (selected.value.startsWith("{") && selected.value.endsWith("}")) expression = selected.value.replace("{", '').replace("}", '');
+
+			let result;
+			if (expression.includes("+") || expression.includes("-") || expression.includes("*")) {
+				const [operand1, operator, operand2] = expression.match(/([\w]+)\s*([+\-*])\s*([\w]+)/).slice(1);
+				result = eval(`${text}Number.parseInt(${operand1}) ${operator} Number.parseInt(${operand2})`);
+			}
+			else if (expression.includes("$")) {
+				const [operand1, operand2] = expression.split("$");
+				result = eval(`${text}${operand1} + ${operand2}`);
+			}
+			else {
+				result = eval(`${text}${expression}`);
+			}
+			selected.value = result;
 		}
 
 		if (e.key == "ArrowLeft") {
